@@ -1,0 +1,18 @@
+import express, { urlencoded } from "express";
+import cors from 'cors';
+import cookieParser from "cookie-parser";
+import { DATA_LIMIT } from "./constants";
+
+const app = express();
+
+app.use(cors({
+    origin:process.env.CORS_ORIGIN,
+    credentials:true
+}))
+
+app.use(express.json({limit:DATA_LIMIT}))
+app.use(urlencoded({extended:true,limit:DATA_LIMIT}))
+app.use(express.static('public'))
+app.use(cookieParser())
+
+export { app };
