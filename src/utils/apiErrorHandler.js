@@ -1,5 +1,5 @@
-class ApiErrorHandler extends Error {
-  constructor(statuscode, message = "something went wrong", stack, errors = []) {
+export class ApiErrorHandler extends Error {
+  constructor(statuscode, message = "something went wrong", stack='', errors = []) {
     super(message);
     this.statuscode= statuscode;
     this.errors= errors;
