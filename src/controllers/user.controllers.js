@@ -17,7 +17,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     throw new ApiErrorHandler(400, "Please write email in correct form");
 
   if (!passwordValidator(password))
-    return ApiErrorHandler(
+    throw new ApiErrorHandler(
       400,
       "Password must contains atleat one lower case character,one upper case and digit as well"
     );
@@ -28,8 +28,21 @@ export const registerUser = asyncHandler(async (req, res) => {
 
   if (existingUser) throw new ApiErrorHandler(409, "user already exists");
 
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  let avatarLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.avatar) &&
+    req.files.avatar.length > 0
+  )
+    avatarLocalPath = req.files?.avatar[0]?.path;
+
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  )
+    coverImageLocalPath = req.files.coverImage[0].path;
 
   if (!avatarLocalPath) throw new ApiErrorHandler(400, "avatar is required");
 
@@ -44,14 +57,14 @@ export const registerUser = asyncHandler(async (req, res) => {
     email,
     username,
     avatar: avatar.url,
-    coverImage: coverImage?.url,
+    coverImage: coverImage?.url || "",
   });
 
   const userExist = await User.findById(user._id).select(
     "-password -refreshToken"
   );
 
-  if (userExist)
+  if (!userExist)
     throw new ApiErrorHandler(
       500,
       "something went wrong while registering user"
