@@ -5,6 +5,12 @@ import {
   refreshAccessToken,
   registerUser,
   changeCurrentPassword,
+  getCurrentUser,
+  updateFields,
+  updateAvatar,
+  updateCoverImage,
+  getUserChannelProfile,
+  getUserWatchHistory,
 } from "../controllers/user.controllers.js";
 import { upload } from "../middlewares/multer.middlerware.js";
 import { auth } from "../middlewares/auth.middleware.js";
@@ -27,6 +33,16 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 router.route("/logout").post(auth, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
-router.route("/changeCurrentPassword").post(auth, changeCurrentPassword);
+router.route("/change-password").post(auth, changeCurrentPassword);
+router.route("/current-user").get(auth, getCurrentUser);
+router.route("/update-account").patch(auth, updateFields);
+router
+  .route("/update-avatar")
+  .patch(auth, upload.single("avatar"), updateAvatar);
+router
+  .route("/update-coverimage")
+  .patch(auth, upload.single("coverImage"), updateCoverImage);
+router.route("/watch-history").get(auth, getUserWatchHistory);
+router.route("/channel/:username").get(auth, getUserChannelProfile);
 
 export default router;
