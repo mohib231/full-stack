@@ -17,7 +17,8 @@ const filter = (req, file, cb) => {
     file.mimetype == "image/jpg" ||
     file.mimetype == 'video/mp4' ||
     file.mimetype == 'video/mkv' ||
-    file.mimetype == 'video/ogg'
+    file.mimetype == 'video/ogg' ||
+    file.mimetype == 'image/webp'
   ) {
     cb(null, true);
   } else {

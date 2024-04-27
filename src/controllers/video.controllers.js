@@ -59,6 +59,9 @@ export const postVideo = asyncHandler(async (req, res) => {
 
 export const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+
+  if(!isValidObjectId(videoId)) throw new ApiErrorHandler(400,'id is invalid')
+
   let videoFilePath;
   if (
     req.files &&
@@ -121,6 +124,11 @@ export const updateVideo = asyncHandler(async (req, res) => {
 
 export const getVideoByID = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+
+  if (!isValidObjectId(videoId))
+    throw new ApiErrorHandler(400, "id is invalid");
+
+
   const videoDetails = await Video.findById(videoId);
   if (!videoDetails) throw new ApiErrorHandler(404, "video not found");
   return res
@@ -136,6 +144,11 @@ export const getVideoByID = asyncHandler(async (req, res) => {
 
 export const deleteVideoByID = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+
+  if (!isValidObjectId(videoId))
+    throw new ApiErrorHandler(400, "id is invalid");
+
+
   const videoDetails = await Video.findById(videoId);
 
   if (!videoDetails) throw new ApiErrorHandler(400, "video not found");
@@ -158,6 +171,10 @@ export const deleteVideoByID = asyncHandler(async (req, res) => {
 
 export const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+
+    if (!isValidObjectId(videoId))
+      throw new ApiErrorHandler(400, "id is invalid");
+
 
   const videoDetails = await Video.findById(videoId);
 
