@@ -206,8 +206,8 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user?._id);
 
   if (!user) throw new ApiErrorHandler(401, "you are not logged in");
-
   const isPasswordValid = await user.isPasswordCorrect(oldPassword);
+  
 
   if (!isPasswordValid) throw new ApiErrorHandler(409, "password is not valid");
 
@@ -315,7 +315,7 @@ export const updateCoverImage = asyncHandler(async (req, res) => {
   ).select("-password");
   if (!user) throw new ApiErrorHandler(409, "user not logged in");
 
-  await user.save({ validateBeforeSave: false });
+  // await user.save({ validateBeforeSave: false });
 
   const deleteOldCoverImage = await deleteFromCloudinary(req.user?.avatar);
 

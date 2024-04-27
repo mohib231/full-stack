@@ -10,11 +10,14 @@ const storage = multer.diskStorage({
   },
 });
 
-const imagesFilter = (req, file, cb) => {
+const filter = (req, file, cb) => {
   if (
     file.mimetype == "image/png" ||
     file.mimetype == "image/jpeg" ||
-    file.mimetype == "image/jpg"
+    file.mimetype == "image/jpg" ||
+    file.mimetype == 'video/mp4' ||
+    file.mimetype == 'video/mkv' ||
+    file.mimetype == 'video/ogg'
   ) {
     cb(null, true);
   } else {
@@ -22,4 +25,4 @@ const imagesFilter = (req, file, cb) => {
   }
 };
 
-export const upload = multer({ storage ,fileFilter:imagesFilter});
+export const upload = multer({ storage ,fileFilter:filter});
