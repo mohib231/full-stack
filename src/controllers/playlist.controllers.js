@@ -2,11 +2,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiErrorHandler } from "../utils/apiErrorHandler.js";
 import { ApiResponseHandler } from "../utils/apiResponseHandler.js";
 import { Playlist } from "../models/playlist.model.js";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId, mongo } from "mongoose";
 
 export const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
-
   if (!name) throw new ApiErrorHandler(400, "name is required");
 
   if (!description) throw new ApiErrorHandler(400, "description is required");
@@ -29,23 +28,12 @@ export const getUserPlaylist = asyncHandler(async (req, res) => {
 
   if (!isValidObjectId(userId)) throw new ApiErrorHandler(401, "id is invalid");
 
-  const userPlaylists = await Playlist.aggregate([
-    {
-      $match: { owner: userId },
-    },
-  ]);
+  const userPlaylists = await Playlist.find({
+    owner: new mongoose.Types.ObjectId(userId),
+  });
 
-  if (!userPlaylists)
-    return res
-      .status(200)
-      .json(
-        new ApiResponseHandler(
-          200,
-          { userPlaylists },
-          "nothing in playlist yet"
-        )
-      );
-
+  if (!userPlaylists.length)
+    throw new ApiErrorHandler(404, "playlist not found");
   return res
     .status(200)
     .json(
@@ -84,7 +72,7 @@ export const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
   if (!playlist) throw new ApiErrorHandler(401, "can't  find playlist");
 
-  playlist.video = videoId;
+  playlist.videos = videoId;
 
   const addedVideo = await playlist.save({ validateBeforeSave: true });
 
@@ -103,9 +91,12 @@ export const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   if (!isValidObjectId(playlistId) && !isValidObjectId(videoId))
     throw new ApiErrorHandler(400, "id is invalid");
 
-  const playlist = await Playlist.updateOne(
+  const playlist = await Playlist.findByIdAndUpdate(
     { _id: playlistId },
-    { $pull: { video: videoId } }
+    { $pull: { videos: videoId } },
+    {
+      new: true,
+    }
   );
 
   if (!playlist) throw new ApiErrorHandler(404, "playlist not found");
@@ -146,7 +137,7 @@ export const updatePlaylist = asyncHandler(async (req, res) => {
 
   let updatePlaylist;
   if (!name)
-    updatePlaylist = Playlist.findByIdAndUpdate(
+    updatePlaylist =await Playlist.findByIdAndUpdate(
       playlistId,
       {
         description: description,
@@ -154,7 +145,7 @@ export const updatePlaylist = asyncHandler(async (req, res) => {
       { new: true }
     );
   else if (!description)
-    updatePlaylist = Playlist.findByIdAndUpdate(
+    updatePlaylist =await Playlist.findByIdAndUpdate(
       playlistId,
       {
         name: name,
@@ -162,7 +153,7 @@ export const updatePlaylist = asyncHandler(async (req, res) => {
       { new: true }
     );
   else
-    updatePlaylist = Playlist.findByIdAndUpdate(
+    updatePlaylist = await Playlist.findByIdAndUpdate(
       playlistId,
       {
         name: name,

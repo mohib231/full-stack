@@ -40,9 +40,15 @@ export const updateComment = asyncHandler(async (req, res) => {
   if (!content.trim())
     throw new ApiErrorHandler(400, "please type your content");
 
-  const comment = await Comment.findByIdAndUpdate(commentId, {
-    content: content?.trim(),
-  });
+  const comment = await Comment.findByIdAndUpdate(
+    commentId,
+    {
+      content: content?.trim(),
+    },
+    {
+      new: true,
+    }
+  );
   if (!comment) throw new ApiErrorHandler(401, "comment not updated");
 
   res
@@ -67,12 +73,11 @@ export const deleteComment = asyncHandler(async (req, res) => {
 export const getVideoComments = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   const { page = 1, limit = 10 } = req.query;
-  console.log(page);
-  console.log(limit);
+  
   const skip = (parseInt(page) - 1) * parseInt(limit);
   const VideoComments = await Comment.aggregate([
     {
-      $match: { video: videoId },
+      $match: { video: new mongoose.Types.ObjectId(videoId) },
     },
     {
       $lookup: {
@@ -85,8 +90,9 @@ export const getVideoComments = asyncHandler(async (req, res) => {
   ])
     .skip(skip)
     .limit(parseInt(limit))
-    .exec((err, document) => {
-      if (err) throw new ApiErrorHandler(500, err.message);
-      return res.status(200).json(new ApiResponseHandler(200,{document},'video comments'))
-    });
+    .exec();
+
+    if(!VideoComments) throw new ApiErrorHandler(404,'comments not found')
+
+    return res.status(200).json( new ApiResponseHandler(200,{VideoComments},'fetched successfully'))
 });

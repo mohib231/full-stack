@@ -8,7 +8,7 @@ import {
 } from "../utils/cloudinary.js";
 import { ApiResponseHandler } from "../utils/apiResponseHandler.js";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import mongoose,{ isValidObjectId } from "mongoose";
 
 const generateRefreshAndAccessToken = async function (userId) {
   try {
@@ -99,7 +99,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password)
+  if (!email && !password)
     throw new ApiErrorHandler(400, "these field can'\t be null");
 
   const user = await User.findOne({ email: email });
@@ -143,7 +143,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
   const { user } = req;
   await User.findByIdAndUpdate(
     user._id,
-    { refreshToken: undefined },
+    { $unset: { refreshToken: "" } },
     { new: true }
   );
 
@@ -207,7 +207,6 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
 
   if (!user) throw new ApiErrorHandler(401, "you are not logged in");
   const isPasswordValid = await user.isPasswordCorrect(oldPassword);
-  
 
   if (!isPasswordValid) throw new ApiErrorHandler(409, "password is not valid");
 
@@ -232,7 +231,7 @@ export const updateFields = asyncHandler(async (req, res) => {
 
   if (!isPasswordValid) throw new ApiErrorHandler(409, "password is not valid");
 
-  await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     user._id,
     {
       $set: {
@@ -244,15 +243,22 @@ export const updateFields = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
-  user.save({ validateBeforeSave: false });
+  await user.save({ validateBeforeSave: false });
 
   return res
     .status(200)
-    .json(new ApiResponseHandler(200, {}, "fields are updated successfully"));
+    .json(
+      new ApiResponseHandler(
+        200,
+        { updatedUser },
+        "fields are updated successfully"
+      )
+    );
 });
 
 export const updateAvatar = asyncHandler(async (req, res) => {
   const avatarPath = req.file?.path;
+  console.log(req.file);
   if (!avatarPath) throw new ApiErrorHandler(200, "avatar is missing");
 
   const avatar = await uploadOnCloudinary(avatarPath);
@@ -360,10 +366,14 @@ export const getUserChannelProfile = asyncHandler(async (req, res) => {
     {
       $addFields: {
         subscriberCount: {
-          $size: "$subcribers",
+          $size: {
+            $ifNull: ["$subcribers", []],
+          },
         },
         channelsSubscribedToCount: {
-          $size: "$subscribedTo",
+          $size: {
+            $ifNull: ["$subscribedTo",[]],
+          },
         },
         isSubscribed: {
           $cond: {
@@ -447,8 +457,7 @@ export const getUserWatchHistory = asyncHandler(async (req, res) => {
     },
   ]);
 
-  if (!user?.length)
-    throw new ApiErrorHandler(404, "nothing in history");
+  if (!user?.length) throw new ApiErrorHandler(404, "nothing in history");
 
   res
     .status(200)
