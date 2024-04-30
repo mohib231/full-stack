@@ -1,22 +1,22 @@
 import { User } from "../models/user.model.js";
 import { ApiErrorHandler } from "../utils/apiErrorHandler.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken";
 
+export const auth = asyncHandler(async (req, _, next) => {
+  const token =
+    req.cookies?.accessToken || req.rawHeaders[1]?.replace("Bearer ", "");
+  if (!token) throw new ApiErrorHandler(401, "can't find token");
 
-export const auth = asyncHandler(async(req,_,next)=>{
-const token = req.cookies?.accessToken || req.Headers('Authorization')?.replace('Bearer ','')
+  const jwtVerification = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-if(!token) throw new ApiErrorHandler(401,'can\'t find token')
+  if (!jwtVerification) throw new ApiErrorHandler(401, "unauthorized request");
 
-const jwtVerification = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+  const user = await User.findById(jwtVerification._id).select(
+    "-password -refreshToken"
+  );
+  if (!user) throw new ApiErrorHandler(400, "invalid access token");
 
-if(!jwtVerification)
-throw new ApiErrorHandler(401,'unauthorized request')
-
-const user = await User.findById(jwtVerification._id).select('-password -refreshToken');
-if(!user) throw new ApiErrorHandler(400,'invalid access token')
-
-req.user = user;
-next()
-})
+  req.user = user;
+  next();
+});

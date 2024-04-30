@@ -40,7 +40,7 @@ router
   .route("/update-avatar")
   .patch(auth, upload.single("avatar"), updateAvatar);
 router
-  .route("/update-coverimage")
+  .route("/update-cover-image")
   .patch(auth, upload.single("coverImage"), updateCoverImage);
 router.route("/watch-history").get(auth, getUserWatchHistory);
 router.route("/channel/:username").get(auth, getUserChannelProfile);

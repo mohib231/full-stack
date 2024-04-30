@@ -23,7 +23,22 @@ export const getChannelStats = asyncHandler(async (req, res) => {
 
   const getTotalLikes = await Like.aggregate([
     {
-      $match: { video: { $in: req.user._id } },
+      $lookup: {
+        from: "videos",
+        let: { videoId: "$video" }, // Define variable to hold video id from 'Like' collection
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$_id", "$$videoId"] }, // Match videos where _id equals videoId from 'Like' collection
+              owner: req.user._id, // Match the owner field of the video with req.user._id
+            },
+          },
+        ],
+        as: "videoDetails",
+      },
+    },
+    {
+      $match: { videoDetails: { $ne: [] } }, // Filter out likes where videoDetails array is empty
     },
     {
       $group: {

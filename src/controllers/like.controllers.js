@@ -115,7 +115,7 @@ export const getLikedVideos = asyncHandler(async (req, res) => {
       },
     },
   ]);
-  if (!likedVideos)
+  if (!likedVideos.length)
     return res
       .status(200)
       .json(
